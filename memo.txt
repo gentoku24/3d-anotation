@@ -1,0 +1,56 @@
+// プロジェクト構成
+// ルートフォルダ名：3d-annotation-tool
+
+/3d-annotation-tool
+├── public
+│   ├── index.html
+│   └── assets/
+│       └── example_image.jpg
+├── src
+│   ├── components
+│   │   ├── PointCloudViewer.tsx         // 3D点群表示用 (Three.js)
+│   │   ├── ImageViewer.tsx              // 画像 + 2D BBox描画 (Canvas or HTML overlay)
+│   │   ├── AnnotationPanel.tsx          // 編集フォーム (座標, サイズ, 回転, ラベル)
+│   │   ├── LabelSelector.tsx            // クラスラベル選択 (ドロップダウン)
+│   │   ├── MultiViewLayout.tsx          // 上面、正面、側面ビューまとめ
+│   │   ├── BoundingBoxEditor.tsx        // ハンドル操作（ドラッグ・スケール・回転）
+│   │   └── CameraSwitchTabs.tsx         // フロント/サイド/リア画像切替
+│   ├── hooks
+│   │   └── useAnnotationStore.ts        // Zustandで状態管理
+│   ├── utils
+│   │   ├── calibration.ts               // 内外部パラメータによる変換（投影、逆投影）
+│   │   ├── clustering.ts                // クラスタリング補助（Pythonでの処理を呼ぶ）
+│   │   └── fileIO.ts                    // JSON入出力、PCD/画像ファイルロード
+│   ├── types
+│   │   └── annotation.d.ts              // Annotation型定義（2D/3D BBox, etc）
+│   ├── App.tsx                          // アプリ全体構成、ルーティング・レイアウト
+│   ├── main.tsx                         // Reactルート
+│   └── index.css                        // Tailwind / カスタムスタイル
+├── data                                 // PCD, BMP, calib, result.json 保存用
+│   ├── 0001
+│   │   ├── lidar.pcd
+│   │   ├── image.bmp
+│   │   ├── calib.json
+│   │   └── result.json
+│   └── 0002/...
+├── .gitignore
+├── tailwind.config.js
+├── tsconfig.json
+├── vite.config.ts                       // Viteビルド設定
+├── package.json
+└── README.md
+
+
+#Node.jsをインストール
+https://nodejs.org/ja
+
+# プロジェクトディレクトリに移動
+cd 3d-annotation-tool
+
+# パッケージインストール
+npm install
+
+# 開発サーバー起動
+npm run dev
+
+http://localhost:5173 にアクセス

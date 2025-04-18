@@ -1,0 +1,22 @@
+{
+  "annotations": [
+    {
+      "id": 1,
+      "class": "car",
+      "bbox_3d": {
+        "center": [2.5, 0.8, 15.0],
+        "dimensions": [4.5, 1.8, 2.0],
+        "rotation": { "yaw": 0.5 }
+      }
+    },
+    {
+      "id": 2,
+      "class": "pedestrian",
+      "bbox_3d": {
+        "center": [-1.0, 1.0, 8.0],
+        "dimensions": [0.8, 1.7, 0.8],
+        "rotation": { "yaw": 0.0 }
+      }
+    }
+  ]
+}
