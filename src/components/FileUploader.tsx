@@ -2,6 +2,7 @@
 import React, { useCallback } from 'react';
 import { PointCloudLoader } from '../utils/pointCloudLoader';
 import { DataFolder } from '../types/files';
+import { loadAnnotationsFromFile } from '../utils/fileIO';
 
 interface FileUploaderProps {
   onDataLoad: (data: {
@@ -28,32 +29,41 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onDataLoad }) => {
         const file = files[i];
         const extension = file.name.split('.').pop()?.toLowerCase();
 
-        if (extension === 'pcd' && !pointCloudFile) {
+        if (extension === 'pcd') {
           pointCloudFile = file;
-        } else if (['bmp', 'jpg', 'jpeg', 'png'].includes(extension || '') && !imageFile) {
+          console.log('Found PCD file:', file.name);
+        } else if (['bmp', 'jpg', 'jpeg', 'png'].includes(extension || '')) {
           imageFile = file;
+          console.log('Found image file:', file.name);
         } else if (file.name === 'annotations.json') {
           annotationFile = file;
+          console.log('Found annotation file:', file.name);
         }
       }
 
-      // 各ファイルを読み込む
-      const results = await Promise.all([
-        pointCloudFile ? PointCloudLoader.loadPCD(pointCloudFile) : undefined,
-        imageFile ? URL.createObjectURL(imageFile) : undefined,
-        annotationFile ? new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            resolve(JSON.parse(e.target?.result as string));
-          };
-          reader.readAsText(annotationFile);
-        }) : undefined
-      ]);
+      // 点群データの読み込み
+      const pointCloud = pointCloudFile ? await PointCloudLoader.loadPCD(pointCloudFile) : undefined;
 
+      // 画像パスの設定
+      let imagePath;
+      if (imageFile) {
+        imagePath = URL.createObjectURL(imageFile);
+        console.log('Created image URL:', imagePath);
+      }
+
+      // アノテーションファイルの読み込み
+      let annotations;
+      if (annotationFile) {
+        const annotationData = await loadAnnotationsFromFile(annotationFile);
+        annotations = annotationData;
+        console.log('Loaded annotations:', annotations);
+      }
+
+      // データを親コンポーネントに渡す
       onDataLoad({
-        pointCloud: results[0],
-        imagePath: results[1],
-        annotations: results[2]?.annotations
+        pointCloud,
+        imagePath,
+        annotations
       });
 
     } catch (error) {

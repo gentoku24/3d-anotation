@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Point, PointCloud } from '../types/pointcloud';
 import { BoundingBoxHelper, BBox3D } from '../utils/BoundingBoxHelper';
+import { useAnnotationStore } from '../hooks/useAnnotationStore';
 
 interface PointCloudViewerProps {
   pointCloud?: PointCloud;
@@ -29,6 +30,10 @@ const PointCloudViewer: React.FC<PointCloudViewerProps> = ({
   const controlsRef = useRef<OrbitControls | null>(null);
   const pointsRef = useRef<THREE.Points | null>(null);
   const boxesRef = useRef<THREE.Object3D[]>([]);
+  const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
+  const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
+  const selectAnnotation = useAnnotationStore((state) => state.selectAnnotation);
+  const selectedId = useAnnotationStore((state) => state.selectedAnnotationId);
 
   // シーンの初期化
   useEffect(() => {
@@ -196,6 +201,47 @@ const PointCloudViewer: React.FC<PointCloudViewerProps> = ({
     }
   }, [pointCloud]);
 
+  // クリックイベントの処理
+  const handleClick = (event: MouseEvent) => {
+    if (!mountRef.current || !sceneRef.current || !cameraRef.current) return;
+
+    // マウス座標の正規化
+    const rect = mountRef.current.getBoundingClientRect();
+    mouseRef.current.x = ((event.clientX - rect.left) / width) * 2 - 1;
+    mouseRef.current.y = -((event.clientY - rect.top) / height) * 2 + 1;
+
+    // レイキャスティング
+    raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+    
+    // ボックスの検出
+    const intersects = raycasterRef.current.intersectObjects(
+      boxesRef.current.flatMap(box => box.children),
+      true
+    );
+
+    if (intersects.length > 0) {
+      // クリックされたボックスの親オブジェクトを特定
+      const clickedBox = intersects[0].object.parent;
+      const clickedIndex = boxesRef.current.findIndex(box => box === clickedBox);
+      if (clickedIndex !== -1) {
+        // アノテーションIDで選択
+        selectAnnotation(annotations[clickedIndex].id);
+      }
+    } else {
+      // 何もクリックされていない場合は選択解除
+      selectAnnotation(-1);
+    }
+  };
+
+  // クリックイベントのセットアップ
+  useEffect(() => {
+    const element = mountRef.current;
+    if (element) {
+      element.addEventListener('click', handleClick);
+      return () => element.removeEventListener('click', handleClick);
+    }
+  }, [annotations]);
+
   // バウンディングボックスの更新
   useEffect(() => {
     if (!sceneRef.current) return;
@@ -207,13 +253,22 @@ const PointCloudViewer: React.FC<PointCloudViewerProps> = ({
     boxesRef.current = [];
 
     // 新しいボックスを追加
-    annotations.forEach((annotation, index) => {
-      const color = annotation.class === 'car' ? 0xff0000 : 0x00ff00;
+    annotations.forEach((annotation) => {
+      const isSelected = annotation.id === selectedId;
+      const color = isSelected ? 0x00ff00 : (annotation.class === 'car' ? 0xff0000 : 0x0000ff);
       const box = BoundingBoxHelper.createBoundingBox(annotation.bbox_3d, color);
+      
+      // 選択されているボックスは太い線で表示
+      if (isSelected) {
+        const edges = box.children[0] as THREE.LineSegments;
+        const material = edges.material as THREE.LineBasicMaterial;
+        material.linewidth = 2;
+      }
+      
       sceneRef.current?.add(box);
       boxesRef.current.push(box);
     });
-  }, [annotations]);
+  }, [annotations, selectedId]);
 
   return <div ref={mountRef} style={{ width, height }} />;
 };

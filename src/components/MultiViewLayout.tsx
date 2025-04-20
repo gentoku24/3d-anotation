@@ -1,28 +1,58 @@
 import React from 'react';
 import PointCloudViewer from './PointCloudViewer';
 import ImageViewer from './ImageViewer';
+import BoundingBoxEditor from './BoundingBoxEditor';
+import { useAnnotationStore } from '../hooks/useAnnotationStore';
 
-const MultiViewLayout: React.FC = () => {
+interface MultiViewLayoutProps {
+  pointCloud?: any;
+  imagePath?: string;
+}
+
+const MultiViewLayout: React.FC<MultiViewLayoutProps> = ({ pointCloud, imagePath }) => {
+  const selectedId = useAnnotationStore((state) => state.selectedAnnotationId);
+  const annotations = useAnnotationStore((state) => state.annotations);
+
   return (
-    <div className="grid grid-cols-2 grid-rows-3 gap-2 h-full p-2">
-      <div className="row-span-2 border bg-white">
-        <PointCloudViewer /> {/* 左上: 自由視点 3D ビュー */}
+    <div className="grid grid-cols-2 gap-2 h-full p-2">
+      {/* メインビュー */}
+      <div className="row-span-2 col-span-1 space-y-2">
+        <div className="h-3/4 border bg-white">
+          <PointCloudViewer 
+            pointCloud={pointCloud}
+            annotations={annotations}
+          />
+        </div>
+        <div className="h-1/4 border bg-white">
+          <ImageViewer 
+            imagePath={imagePath || ''}
+            width={window.innerWidth * 0.35}
+            height={window.innerHeight * 0.25}
+          />
+        </div>
       </div>
-      <div className="row-span-1 border bg-white">
-        <ImageViewer /> {/* 左下: 画像ビュー */}
-      </div>
-      <div className="col-span-1 border bg-white">
-        {/* 右上: 上面ビュー（後ほど実装） */}
-        <PointCloudViewer view="top" />
-      </div>
-      <div className="col-span-1 border bg-white">
-        {/* 右中: 正面ビュー（後ほど実装） */}
-        <PointCloudViewer view="front" />
-      </div>
-      <div className="col-span-1 border bg-white">
-        {/* 右下: 側面ビュー（後ほど実装） */}
-        <PointCloudViewer view="side" />
-      </div>
+
+      {/* バウンディングボックスエディタ */}
+      {selectedId ? (
+        <div className="col-span-1 space-y-2">
+          <div className="border bg-white p-2">
+            <h3 className="text-sm font-semibold mb-2">上面ビュー</h3>
+            <BoundingBoxEditor view="top" width={300} height={200} />
+          </div>
+          <div className="border bg-white p-2">
+            <h3 className="text-sm font-semibold mb-2">正面ビュー</h3>
+            <BoundingBoxEditor view="front" width={300} height={200} />
+          </div>
+          <div className="border bg-white p-2">
+            <h3 className="text-sm font-semibold mb-2">側面ビュー</h3>
+            <BoundingBoxEditor view="side" width={300} height={200} />
+          </div>
+        </div>
+      ) : (
+        <div className="col-span-1 flex items-center justify-center border bg-gray-50">
+          <p className="text-gray-500">バウンディングボックスを選択してください</p>
+        </div>
+      )}
     </div>
   );
 };

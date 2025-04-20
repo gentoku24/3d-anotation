@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useAnnotationStore } from './hooks/useAnnotationStore';
-import PointCloudViewer from './components/PointCloudViewer';
-import ImageViewer from './components/ImageViewer';
 import FileUploader from './components/FileUploader';
 import { PointCloud } from './types/pointcloud';
+import MultiViewLayout from './components/MultiViewLayout';
 
 const App: React.FC = () => {
   const annotations = useAnnotationStore((state) => state.annotations);
@@ -19,7 +18,6 @@ const App: React.FC = () => {
   }) => {
     if (pointCloud) {
       setPointCloud(pointCloud);
-      // フォルダ名を抽出（例: "data/0001/file.pcd" から "0001"を取得）
       const folderMatch = pointCloud.name?.match(/([^/\\]+)[/\\][^/\\]+$/);
       setFolderName(folderMatch ? folderMatch[1] : undefined);
     }
@@ -27,7 +25,6 @@ const App: React.FC = () => {
       setImagePath(imagePath);
     }
     if (loadedAnnotations) {
-      // 既存のアノテーションをクリアしてから新しいアノテーションを追加
       loadedAnnotations.forEach(annotation => {
         addAnnotation(annotation);
       });
@@ -61,33 +58,12 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* メインビューエリア */}
-      <div className="flex flex-1">
-        {/* 点群ビューア */}
-        <div className="w-3/4 bg-gray-50">
-          <PointCloudViewer 
-            pointCloud={pointCloud}
-            annotations={annotations}
-          />
-        </div>
-        
-        {/* 画像ビューア */}
-        <div className="w-1/4 bg-gray-800 flex flex-col">
-          <div className="p-2 bg-gray-700 text-white">
-            <h3 className="text-sm font-semibold">Camera Image</h3>
-          </div>
-          {imagePath ? (
-            <ImageViewer 
-              imagePath={imagePath}
-              width={window.innerWidth * 0.25}
-              height={window.innerHeight - 40}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-gray-400">
-              No image loaded
-            </div>
-          )}
-        </div>
+      {/* メインコンテンツエリア */}
+      <div className="flex-1">
+        <MultiViewLayout 
+          pointCloud={pointCloud}
+          imagePath={imagePath}
+        />
       </div>
     </div>
   );
